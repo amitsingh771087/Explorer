@@ -29,7 +29,11 @@ const PropertyCard = ({
       // onPress={()=>router.push(`/(root)/property/${property.id}`)}
     >
       <Image
-        source={{ uri: property.images[0] }}
+        source={{
+          uri:
+            property.images?.[0] ||
+            "https://via.placeholder.com/112x112?text=No+Image",
+        }}
         className="w-28 h-28 "
         resizeMode="cover"
       />

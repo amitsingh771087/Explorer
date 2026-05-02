@@ -23,7 +23,11 @@ const FeaturedCard = ({ property }: { property: Properties }) => {
       // onPress={()=>router.push(`/(root)/property/${property.id}`)}
     >
       <Image
-        source={{ uri: property.images[0] }}
+        source={{
+          uri:
+            property.images?.[0] ||
+            "https://via.placeholder.com/400x176?text=No+Image",
+        }}
         className="w-full h-44 "
         resizeMode="cover"
       />

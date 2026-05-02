@@ -31,13 +31,19 @@ const HomeScreen = () => {
     setLoading(true);
 
     try {
+      const { data: featuredData } = await supabase
+        .from("properties")
+        .select("*")
+        .eq("is_featured", true)
+        .order("created_at", { ascending: false });
+
       const { data: recommendedData } = await supabase
         .from("properties")
         .select("*")
         .eq("is_featured", false)
         .order("created_at", { ascending: false });
 
-      setFeatured(recommendedData || []);
+      setFeatured(featuredData || []);
       setRecommended(recommendedData || []);
       setLoading(false);
     } catch (error) {

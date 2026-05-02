@@ -9,7 +9,10 @@ export const useUserSync = () => {
   const authsupabase = usesupabase();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
     syncUser();
   }, [user]);
 
@@ -30,7 +33,7 @@ export const useUserSync = () => {
       .from("users")
       .insert({
         clerk_id: user!.id,
-        email: user!.emailAddresses[0].emailAddress,
+        email: user!.emailAddresses?.[0]?.emailAddress || null,
         first_name: user!.firstName,
         last_name: user!.lastName,
         avatar_url: user!.imageUrl,
