@@ -20,7 +20,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const Search = () => {
-  const [restult, setResult] = useState<Properties[]>([]);
+  const [result, setResult] = useState<Properties[]>([]);
   const [loading, setLoading] = useState(false);
   const [queryError, setQueryError] = useState<string | null>(null);
   const [showFilter, setShowFilter] = useState(false);
@@ -229,13 +229,13 @@ const Search = () => {
       {/* Results */}
 
       <FlatList
-        data={restult}
+        data={result}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <Text className="text-sm text-gray-400 mb-4">
-            {loading ? "Searching..." : `${restult.length} Properties Found`}
+            {loading ? "Searching..." : `${result.length} Properties Found`}
           </Text>
         }
         ListFooterComponent={
