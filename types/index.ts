@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 export interface Properties {
   id: string;
   title: string;
@@ -21,4 +22,31 @@ export interface PropertieCard {
   property: Properties;
   onUnsaved?: () => void;
   showSaved?: boolean;
+}
+export type PropertyType = "apartment" | "house" | "villa" | "studio" | null;
+
+export interface FilterState {
+  search: string;
+  type: PropertyType;
+  bedrooms: number | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+
+  setSearch: (value: string) => void;
+  setType: (value: PropertyType) => void;
+  setBedrooms: (value: number | null) => void;
+  setMinPrice: (value: number | null) => void;
+  setMaxPrice: (value: number | null) => void;
+  resetFilters: () => void;
+}
+
+export interface FilterModalProps {
+  visible: boolean;
+  onClose: () => void;
+}
+
+export interface FilterChipProps {
+  label: string;
+  onRemove: () => void;
+  icon?: keyof typeof Ionicons.glyphMap;
 }

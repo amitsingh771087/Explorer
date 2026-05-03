@@ -39,6 +39,7 @@ const PropertyCard = ({
       />
 
       <View className="flex-1 p-3 justify-between">
+        {/* Property Title */}
         <View>
           <Text
             className="text-sm font-bold text-gray-800 mb-1"
@@ -46,6 +47,7 @@ const PropertyCard = ({
           >
             {property.title}
           </Text>
+          {/* Property City */}
           <View className="flex-row items-center gap-1">
             <Ionicons name="location-outline" size={11} color={"#6B7280"} />
             <Text
@@ -56,6 +58,7 @@ const PropertyCard = ({
             </Text>
           </View>
         </View>
+        {/* Property Price */}
         <View className="flex-row items-center justify-between">
           <Text className="text-blue-600 font-bold text-sm">
             {formatPrice(property.price)}
