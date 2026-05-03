@@ -1,7 +1,7 @@
 import { useFilterStore } from "@/store/filter";
 import { FilterModalProps } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   ScrollView,
@@ -14,12 +14,10 @@ import { BEDS, chip, chipText, PRICE_PRESETS, TYPES } from "./Filters";
 
 const FilterModel = ({ visible, onClose }: FilterModalProps) => {
   const {
-    search,
     type,
     bedrooms,
     minPrice,
     maxPrice,
-    setSearch,
     setType,
     setBedrooms,
     setMaxPrice,
@@ -27,8 +25,18 @@ const FilterModel = ({ visible, onClose }: FilterModalProps) => {
     resetFilters,
   } = useFilterStore();
 
-  const [localMin, setLocalMin] = useState(minPrice ? String(minPrice) : "");
-  const [localMax, setLocalMax] = useState(maxPrice ? String(maxPrice) : "");
+  const [localMin, setLocalMin] = useState(
+    minPrice !== null ? String(minPrice) : "",
+  );
+  const [localMax, setLocalMax] = useState(
+    maxPrice !== null ? String(maxPrice) : "",
+  );
+
+  useEffect(() => {
+    if (!visible) return;
+    setLocalMin(minPrice !== null ? String(minPrice) : "");
+    setLocalMax(maxPrice !== null ? String(maxPrice) : "");
+  }, [visible, minPrice, maxPrice]);
 
   const handleReset = () => {
     setLocalMin("");
@@ -37,13 +45,27 @@ const FilterModel = ({ visible, onClose }: FilterModalProps) => {
     onClose();
   };
 
-  const activeCount = [type, bedrooms, localMin, localMax].filter(
-    (v) => v !== null,
-  ).length;
+  const isMinValid =
+    localMin.trim().length > 0 && !Number.isNaN(Number(localMin));
+  const isMaxValid =
+    localMax.trim().length > 0 && !Number.isNaN(Number(localMax));
+  const activeCount = [
+    type !== null,
+    bedrooms !== null,
+    isMinValid,
+    isMaxValid,
+  ].filter(Boolean).length;
 
   const handleApply = () => {
-    setMinPrice(localMin ? Number(localMin) : null);
-    setMaxPrice(localMax ? Number(localMax) : null);
+    const parsedMin = localMin.trim() ? Number(localMin) : null;
+    const parsedMax = localMax.trim() ? Number(localMax) : null;
+
+    setMinPrice(
+      parsedMin === null || Number.isNaN(parsedMin) ? null : parsedMin,
+    );
+    setMaxPrice(
+      parsedMax === null || Number.isNaN(parsedMax) ? null : parsedMax,
+    );
     onClose();
   };
 

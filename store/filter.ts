@@ -16,7 +16,6 @@ export const useFilterStore = create<FilterState>((set) => ({
 
   resetFilters: () => {
     set({
-      search: "",
       type: null,
       bedrooms: null,
       minPrice: null,

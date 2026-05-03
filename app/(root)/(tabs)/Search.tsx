@@ -7,7 +7,7 @@ import { useFilterStore } from "@/store/filter";
 import { Properties } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -22,7 +22,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const Search = () => {
   const [restult, setResult] = useState<Properties[]>([]);
   const [loading, setLoading] = useState(false);
+  const [queryError, setQueryError] = useState<string | null>(null);
   const [showFilter, setShowFilter] = useState(false);
+  const latestFetchId = useRef(0);
 
   const { openFilters } = useLocalSearchParams<{ openFilters?: string }>();
 
@@ -92,28 +94,53 @@ const Search = () => {
   }, [search, type, bedrooms, minPrice, maxPrice]);
 
   const fetchResult = async () => {
+    const currentFetch = ++latestFetchId.current;
+    setQueryError(null);
     setLoading(true);
     let query = supabase.from("properties").select("*");
 
     if (search) {
-      query = query.or(`title.ilike.%${search}%,city.ilike.%${search}%`);
+      const safeSearch = search
+        .replace(/[\[\]\(\),%_"'\\]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (safeSearch) {
+        query = query.or(
+          `title.ilike.%${safeSearch}%,city.ilike.%${safeSearch}%`,
+        );
+      }
     }
 
     if (type) {
       query = query.eq("type", type);
     }
 
-    if (bedrooms) {
-      query = query.eq("bedrooms", bedrooms);
+    if (bedrooms !== null) {
+      query =
+        bedrooms === 4
+          ? query.gte("bedrooms", 4)
+          : query.eq("bedrooms", bedrooms);
     }
-    if (minPrice) {
+    if (minPrice !== null) {
       query = query.gte("price", minPrice);
     }
-    if (maxPrice) {
+    if (maxPrice !== null) {
       query = query.lte("price", maxPrice);
     }
 
-    const { data } = await query.order("created_at", { ascending: false });
+    const { data, error } = await query.order("created_at", {
+      ascending: false,
+    });
+    if (currentFetch !== latestFetchId.current) return;
+    if (error) {
+      console.error("Search query error:", error);
+      setResult([]);
+      setQueryError(error.message ?? "Unable to load properties.");
+      setLoading(false);
+      return;
+    }
+
+    setQueryError(null);
 
     setResult(data ?? []);
     setLoading(false);
@@ -210,6 +237,13 @@ const Search = () => {
           <Text className="text-sm text-gray-400 mb-4">
             {loading ? "Searching..." : `${restult.length} Properties Found`}
           </Text>
+        }
+        ListFooterComponent={
+          queryError ? (
+            <View className="px-5 py-4">
+              <Text className="text-sm text-red-500">{queryError}</Text>
+            </View>
+          ) : null
         }
         renderItem={({ item }) => <PropertyCard property={item} />}
         ListEmptyComponent={
