@@ -28,6 +28,13 @@
     },
     "plugins": [
       "expo-router",
+
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Kribb to access your location to tag propper coordinate. "
+        }
+      ],
       [
         "expo-splash-screen",
         {
