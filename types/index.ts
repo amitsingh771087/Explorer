@@ -50,3 +50,14 @@ export interface FilterChipProps {
   onRemove: () => void;
   icon?: keyof typeof Ionicons.glyphMap;
 }
+
+export interface useSavedPropertiesProps {
+  propertyId: string;
+  onUnsave?: () => void;
+}
+
+export interface SpecItemProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+}
