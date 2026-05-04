@@ -72,12 +72,17 @@ export default function CreatePropertyScreen() {
       return;
     }
 
+    if (form.images.length >= 6) {
+      Alert.alert("Limit Reached", "You can only upload up to 6 images.");
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
       allowsMultipleSelection: true,
       quality: 0.7,
       base64: true,
-      selectionLimit: 6,
+      selectionLimit: 6 - form.images.length,
     });
 
     if (result.canceled) return;
@@ -94,7 +99,7 @@ export default function CreatePropertyScreen() {
           .slice(2)}.jpg`;
 
         const base64 = asset.base64!;
-        const buffer = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+        const buffer = Buffer.from(base64, "base64");
 
         const { error } = await authSupabase.storage
           .from("property-images")
@@ -117,14 +122,26 @@ export default function CreatePropertyScreen() {
       }
     }
 
-    updateForm({
-      images: [...form.images, ...uploadedUrls],
-      localImages: [...form.localImages, ...previewUris],
-    });
+    setForm((prev) => ({
+      ...prev,
+      images: [...prev.images, ...uploadedUrls],
+      localImages: [...prev.localImages, ...previewUris],
+    }));
     setUploadingImages(false);
   };
 
-  const handleRemoveImage = (index: number) => {
+  const handleRemoveImage = async (index: number) => {
+    const imageUrl = form.images[index];
+    if (imageUrl) {
+      try {
+        const filename = imageUrl.split("/").pop();
+        if (filename) {
+          await authSupabase.storage.from("property-images").remove([filename]);
+        }
+      } catch (err) {
+        console.error("Failed to delete image:", err);
+      }
+    }
     updateForm({
       images: form.images.filter((_, i) => i !== index),
       localImages: form.localImages.filter((_, i) => i !== index),
@@ -182,6 +199,8 @@ export default function CreatePropertyScreen() {
       return Alert.alert("Validation", "City is required.");
     if (form.images.length === 0)
       return Alert.alert("Validation", "Please upload at least one image.");
+    if (!form.latitude || !form.longitude)
+      return Alert.alert("Validation", "Coordinates are required.");
 
     setSubmitting(true);
 
