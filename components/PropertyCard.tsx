@@ -10,13 +10,19 @@ const PropertyCard = ({
   property,
   onUnsaved,
   showSaved = false,
+  isSaved: savedProp,
+  saveLoading: saveLoadingProp,
+  onToggleSave,
 }: PropertieCard) => {
   const router = useRouter();
-
-  const { isSaved, saveLoading, toggleSave } = useSavedProperty(
-    property.id,
-    onUnsaved,
-  );
+  const customSave = Boolean(onToggleSave);
+  const saveState = customSave
+    ? {
+        isSaved: savedProp ?? false,
+        saveLoading: saveLoadingProp ?? false,
+        toggleSave: onToggleSave ?? (() => {}),
+      }
+    : useSavedProperty(property.id, onUnsaved);
 
   return (
     <TouchableOpacity
@@ -91,14 +97,14 @@ const PropertyCard = ({
       </View>
 
       <TouchableOpacity
-        onPress={toggleSave}
-        disabled={saveLoading}
+        onPress={saveState.toggleSave}
+        disabled={saveState.saveLoading}
         className="w-10 items-center pt-3"
       >
         <Ionicons
-          name={isSaved ? "heart" : "heart-outline"}
+          name={saveState.isSaved ? "heart" : "heart-outline"}
           size={18}
-          color={isSaved ? "#EF4444" : "#9CA3AF"}
+          color={saveState.isSaved ? "#EF4444" : "#9CA3AF"}
         />
       </TouchableOpacity>
     </TouchableOpacity>

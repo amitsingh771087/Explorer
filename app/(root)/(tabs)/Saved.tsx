@@ -16,6 +16,7 @@ const Saved = () => {
 
   const [saved, setSaved] = useState<SavedProperty[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saveLoadingIds, setSaveLoadingIds] = useState<string[]>([]);
 
   const fetchSaved = useCallback(async () => {
     if (!userId) return;
@@ -29,10 +30,36 @@ const Saved = () => {
 
     if (error) {
     } else {
-      setSaved((data as unknown as SavedProperty[]) ?? []);
+      const rows = (data as unknown as SavedProperty[]) ?? [];
+      setSaved(
+        rows.filter(
+          (
+            row,
+          ): row is SavedProperty & {
+            properties: import("@/types").Properties;
+          } => row.properties !== null,
+        ),
+      );
     }
     setLoading(false);
   }, [userId]);
+
+  const handleToggleSave = useCallback(
+    async (propertyId: string, savedId: string) => {
+      if (saveLoadingIds.includes(propertyId)) return;
+      setSaveLoadingIds((prev) => [...prev, propertyId]);
+      const { error } = await authSupabase
+        .from("saved_properties")
+        .delete()
+        .eq("user_clerk_id", userId)
+        .eq("property_id", propertyId);
+      if (!error) {
+        setSaved((prev) => prev.filter((s) => s.id !== savedId));
+      }
+      setSaveLoadingIds((prev) => prev.filter((id) => id !== propertyId));
+    },
+    [authSupabase, saveLoadingIds, userId],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -63,10 +90,10 @@ const Saved = () => {
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <PropertyCard
-              property={item.properties}
-              onUnsaved={() => {
-                setSaved((prev) => prev.filter((s) => s.id !== item.id));
-              }}
+              property={item.properties!}
+              isSaved
+              saveLoading={saveLoadingIds.includes(item.property_id)}
+              onToggleSave={() => handleToggleSave(item.property_id, item.id)}
               showSaved
             />
           )}
