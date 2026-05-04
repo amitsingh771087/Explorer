@@ -76,3 +76,26 @@ export interface MenuItemProps {
   label: string;
   onPress?: () => void;
 }
+
+export interface FormStateProps {
+  title: string;
+  description: string;
+  price: string;
+  type: PropertyType;
+  bedrooms: number;
+  bathrooms: number;
+  areaSqft: string;
+  address: string;
+  city: string;
+  latitude: string;
+  longitude: string;
+  isFeatured: boolean;
+  images: string[];
+  localImages: string[];
+}
+
+export interface CounterProps {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}
