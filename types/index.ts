@@ -70,3 +70,9 @@ export interface SavedProperty {
   property_id: string;
   properties: Properties | null;
 }
+
+export interface MenuItemProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress?: () => void;
+}
