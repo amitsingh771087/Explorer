@@ -1,12 +1,92 @@
-import React from 'react'
-import { Text, View } from 'react-native'
+import PropertyCard from "@/components/PropertyCard";
+import { useSupabase } from "@/hooks/useSupabase";
+import { SavedProperty } from "@/types";
+import { useAuth } from "@clerk/expo";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
+import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Saved = () => {
-  return (
-    <View>
-      <Text>Saved</Text>
-    </View>
-  )
-}
+  const { userId } = useAuth();
+  const authSupabase = useSupabase();
+  const router = useRouter();
 
-export default Saved
+  const [saved, setSaved] = useState<SavedProperty[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchSaved = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+
+    const { data, error } = await authSupabase
+      .from("saved_properties")
+      .select("id, property_id, properties(*)")
+      .eq("user_clerk_id", userId)
+      .order("id", { ascending: false });
+
+    if (error) {
+    } else {
+      setSaved((data as unknown as SavedProperty[]) ?? []);
+    }
+    setLoading(false);
+  }, [userId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchSaved();
+    }, [fetchSaved]),
+  );
+
+  return (
+    <SafeAreaView className="flex-1 bg-gray-50">
+      <View className="px-5 pb-4 pt-3">
+        <Text className="text-2xl font-bold text-gray-900">Saved</Text>
+        {!loading && (
+          <Text className="text-sm text-gray-400 mt-1">
+            {saved.length} {saved.length === 1 ? "Property" : "Properties"}{" "}
+            saved
+          </Text>
+        )}
+      </View>
+      {loading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#2563EB" />
+        </View>
+      ) : (
+        <FlatList
+          data={saved}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <PropertyCard
+              property={item.properties}
+              onUnsaved={() => {
+                setSaved((prev) => prev.filter((s) => s.id !== item.id));
+              }}
+              showSaved
+            />
+          )}
+          ListEmptyComponent={
+            <View className="flex-1 items-center justify-center py-24">
+              <View className="w-20 h-20 bg-red-50 rounded-full items-center justify-center mb-4 ">
+                <Ionicons name="heart-outline" size={36} color="#FE4444" />
+              </View>
+              <Text className="text-gray-700 text-lg font-bold mb-1">
+                No Saved Property
+              </Text>
+              <Text className="text-gray-400 text-sm text-center px-8">
+                Tap the heart icon on any property to save it here
+              </Text>
+            </View>
+          }
+        />
+      )}
+    </SafeAreaView>
+  );
+};
+
+export default Saved;

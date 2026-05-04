@@ -61,3 +61,9 @@ export interface SpecItemProps {
   label: string;
   value: string;
 }
+
+export interface SavedProperty {
+  id: string;
+  property_id: String;
+  properties: Properties;
+}
