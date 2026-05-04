@@ -1,5 +1,6 @@
 import FeaturedCard from "@/components/FeaturedCard";
 import PropertyCard from "@/components/PropertyCard";
+import { useSupabase } from "@/hooks/useSupabase";
 import { supabase } from "@/lib/supabase";
 import { Properties } from "@/types";
 import { useAuth, useUser } from "@clerk/expo";
@@ -17,9 +18,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const HomeScreen = () => {
-  const { signOut } = useAuth();
+  const { signOut, userId } = useAuth();
   const { user } = useUser();
+  const authSupabase = useSupabase();
   const router = useRouter();
+
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [saveLoadingIds, setSaveLoadingIds] = useState<string[]>([]);
 
   const [featured, setFeatured] = useState<Properties[]>([]);
   const [recommended, setRecommended] = useState<Properties[]>([]);
@@ -51,6 +56,46 @@ const HomeScreen = () => {
       setLoading(false);
     }
   };
+
+  const fetchSavedIds = useCallback(async () => {
+    if (!userId) {
+      const { signOut, userId } = useAuth();
+      return;
+    }
+    const { data, error } = await authSupabase
+      .from("saved_properties")
+      .select("property_id")
+      .eq("user_clerk_id", userId);
+    if (!error && Array.isArray(data)) {
+      setSavedIds(data.map((row) => row.property_id));
+    }
+  }, [authSupabase, userId]);
+
+  const toggleSave = useCallback(
+    async (propertyId: string) => {
+      if (!userId || saveLoadingIds.includes(propertyId)) return;
+      setSaveLoadingIds((prev) => [...prev, propertyId]);
+      if (savedIds.includes(propertyId)) {
+        const { error } = await authSupabase
+          .from("saved_properties")
+          .delete()
+          .eq("user_clerk_id", userId)
+          .eq("property_id", propertyId);
+        if (!error) {
+          setSavedIds((prev) => prev.filter((id) => id !== propertyId));
+        }
+      } else {
+        const { error } = await authSupabase
+          .from("saved_properties")
+          .insert({ user_clerk_id: userId, property_id: propertyId });
+        if (!error) {
+          setSavedIds((prev) => [...prev, propertyId]);
+        }
+      }
+      setSaveLoadingIds((prev) => prev.filter((id) => id !== propertyId));
+    },
+    [authSupabase, savedIds, saveLoadingIds, userId],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -158,7 +203,12 @@ const HomeScreen = () => {
         }
         renderItem={({ item }) => (
           <View className="px-5 ">
-            <PropertyCard property={item} />
+            <PropertyCard
+              property={item}
+              isSaved={savedIds.includes(item.id)}
+              saveLoading={saveLoadingIds.includes(item.id)}
+              onToggleSave={() => toggleSave(item.id)}
+            />
           </View>
         )}
         ListEmptyComponent={

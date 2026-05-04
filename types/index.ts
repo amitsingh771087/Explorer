@@ -22,6 +22,9 @@ export interface PropertieCard {
   property: Properties;
   onUnsaved?: () => void;
   showSaved?: boolean;
+  isSaved?: boolean;
+  saveLoading?: boolean;
+  onToggleSave?: () => void;
 }
 export type PropertyType = "apartment" | "house" | "villa" | "studio" | null;
 
@@ -60,4 +63,10 @@ export interface SpecItemProps {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value: string;
+}
+
+export interface SavedProperty {
+  id: string;
+  property_id: string;
+  properties: Properties | null;
 }

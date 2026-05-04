@@ -1,13 +1,15 @@
 import FilterChip from "@/components/FilterChip";
 import FilterModel from "@/components/FilterModel";
 import PropertyCard from "@/components/PropertyCard";
+import { useSupabase } from "@/hooks/useSupabase";
 import { supabase } from "@/lib/supabase";
 import { formatPrice } from "@/lib/utils";
 import { useFilterStore } from "@/store/filter";
 import { Properties } from "@/types";
+import { useAuth } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -25,6 +27,10 @@ const Search = () => {
   const [queryError, setQueryError] = useState<string | null>(null);
   const [showFilter, setShowFilter] = useState(false);
   const latestFetchId = useRef(0);
+  const { userId } = useAuth();
+  const authSupabase = useSupabase();
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [saveLoadingIds, setSaveLoadingIds] = useState<string[]>([]);
 
   const { openFilters } = useLocalSearchParams<{ openFilters?: string }>();
 
@@ -53,6 +59,50 @@ const Search = () => {
     minPrice !== null,
     maxPrice !== null,
   ].filter(Boolean).length;
+
+  const fetchSavedIds = useCallback(async () => {
+    if (!userId) {
+      setSavedIds([]);
+      return;
+    }
+    const { data, error } = await authSupabase
+      .from("saved_properties")
+      .select("property_id")
+      .eq("user_clerk_id", userId);
+    if (!error && Array.isArray(data)) {
+      setSavedIds(data.map((row) => row.property_id));
+    }
+  }, [authSupabase, userId]);
+
+  const toggleSave = useCallback(
+    async (propertyId: string) => {
+      if (!userId || saveLoadingIds.includes(propertyId)) return;
+      setSaveLoadingIds((prev) => [...prev, propertyId]);
+      if (savedIds.includes(propertyId)) {
+        const { error } = await authSupabase
+          .from("saved_properties")
+          .delete()
+          .eq("user_clerk_id", userId)
+          .eq("property_id", propertyId);
+        if (!error) {
+          setSavedIds((prev) => prev.filter((id) => id !== propertyId));
+        }
+      } else {
+        const { error } = await authSupabase
+          .from("saved_properties")
+          .insert({ user_clerk_id: userId, property_id: propertyId });
+        if (!error) {
+          setSavedIds((prev) => [...prev, propertyId]);
+        }
+      }
+      setSaveLoadingIds((prev) => prev.filter((id) => id !== propertyId));
+    },
+    [authSupabase, savedIds, saveLoadingIds, userId],
+  );
+
+  useEffect(() => {
+    fetchSavedIds();
+  }, [fetchSavedIds]);
 
   const filters = [
     type !== null && {
@@ -245,7 +295,14 @@ const Search = () => {
             </View>
           ) : null
         }
-        renderItem={({ item }) => <PropertyCard property={item} />}
+        renderItem={({ item }) => (
+          <PropertyCard
+            property={item}
+            isSaved={savedIds.includes(item.id)}
+            saveLoading={saveLoadingIds.includes(item.id)}
+            onToggleSave={() => toggleSave(item.id)}
+          />
+        )}
         ListEmptyComponent={
           !loading ? (
             <View className="items-center py-10">
