@@ -9,7 +9,10 @@ export const useUserSync = () => {
   const authSupabase = useSupabase(); // ← authenticated client
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
     syncUser();
   }, [user]);
 

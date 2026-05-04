@@ -28,18 +28,22 @@ export function useSavedProperty(propertyId: string, onUnsave?: () => void) {
     if (!userId || saveLoading) return;
     setSaveLoading(true);
     if (isSaved) {
-      await authSupabase
+      const { error } = await authSupabase
         .from("saved_properties")
         .delete()
         .eq("user_clerk_id", userId)
         .eq("property_id", propertyId);
-      setIsSaved(false);
-      onUnsave?.();
+      if (!error) {
+        setIsSaved(false);
+        onUnsave?.();
+      }
     } else {
-      await authSupabase
+      const { error } = await authSupabase
         .from("saved_properties")
         .insert({ user_clerk_id: userId, property_id: propertyId });
-      setIsSaved(true);
+      if (!error) {
+        setIsSaved(true);
+      }
     }
     setSaveLoading(false);
   };

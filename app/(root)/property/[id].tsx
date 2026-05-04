@@ -66,8 +66,15 @@ export default function PropertyDetailScreen() {
         text: "Delete",
         style: "destructive",
         onPress: async () => {
-          await authSupabase.from("properties").delete().eq("id", id);
-          router.replace("/(root)/(tabs)");
+          const { error } = await authSupabase
+            .from("properties")
+            .delete()
+            .eq("id", id);
+          if (error) {
+            Alert.alert("Error", "Failed to delete property");
+          } else {
+            router.replace("/(root)/(tabs)");
+          }
         },
       },
     ]);

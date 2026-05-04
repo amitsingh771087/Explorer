@@ -18,6 +18,14 @@ const MapScreen = () => {
   const lat = parseFloat(latitude);
   const long = parseFloat(longitude);
 
+  if (!latitude || !longitude || isNaN(lat) || isNaN(long)) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+        <Text>Invalid location data</Text>
+      </SafeAreaView>
+    );
+  }
+
   const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${
     long - 0.001
   }%2C${lat - 0.001}%2C${long + 0.001}%2C${
