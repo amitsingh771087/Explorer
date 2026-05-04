@@ -30,6 +30,21 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleHelpSupport = async () => {
+    const url =
+      "mailto:singh771087@gmail.com?subject=Help%20%26%20Support%20-%20Kribb%20App";
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (!supported) {
+        Alert.alert("Error", "No mail client is available on this device.");
+        return;
+      }
+      await Linking.openURL(url);
+    } catch (error) {
+      Alert.alert("Error", "Unable to open mail client.");
+    }
+  };
+
   const handleUpdateProfileImage = async () => {
     try {
       const permissionResult =
@@ -135,11 +150,7 @@ export default function ProfileScreen() {
         <MenuItem
           icon="help-circle-outline"
           label="Help & Support"
-          onPress={() =>
-            Linking.openURL(
-              "mailto:piyushagarwalvo@gmail.com?subject=Help%20%26%20Support%20-%20Kribb%20App",
-            )
-          }
+          onPress={handleHelpSupport}
         />
       </View>
 
